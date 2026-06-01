@@ -28,7 +28,7 @@ uv add macpoint
 
 ## Configure your MCP client
 
-MacPoint works with **any MCP client** — not just Cursor.
+MacPoint works with any MCP client.
 
 <details>
 <summary><strong>Cursor</strong></summary>
