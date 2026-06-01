@@ -22,7 +22,7 @@ jobs:
           python-version: "3.12"
 
       - name: Install build tools
-        run: pip install hatchling build
+        run: pip install "hatchling>=1.26.0,<1.28" build
 
       - name: Build package
         run: python -m build
