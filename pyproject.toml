@@ -5,7 +5,7 @@ description = "macOS MCP server for Microsoft PowerPoint for Mac — automate sl
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
-authors = [{ name = "Andrew Igdalov", email = "andrewigdal17@gmail.com" }]
+authors = [{ name = "Andrew Igdal", email = "andrewigdal17@gmail.com" }]
 keywords = ["mcp", "powerpoint", "macos", "automation", "cursor", "slides", "presentation"]
 classifiers = [
     "Development Status :: 3 - Alpha",
