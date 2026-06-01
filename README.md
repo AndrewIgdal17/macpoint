@@ -26,7 +26,12 @@ Or with [uv](https://docs.astral.sh/uv/):
 uv add macpoint
 ```
 
-## Configure Cursor
+## Configure your MCP client
+
+MacPoint works with **any MCP client** — not just Cursor.
+
+<details>
+<summary><strong>Cursor</strong></summary>
 
 Add to `~/.cursor/mcp.json`:
 
@@ -41,7 +46,51 @@ Add to `~/.cursor/mcp.json`:
 }
 ```
 
-Restart Cursor after editing. On first use, macOS will ask you to grant **Automation** permission (Cursor → Microsoft PowerPoint) in **System Settings → Privacy & Security → Automation**.
+Restart Cursor after editing.
+</details>
+
+<details>
+<summary><strong>Claude Desktop</strong></summary>
+
+Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "macpoint": {
+      "command": "macpoint",
+      "args": []
+    }
+  }
+}
+```
+
+Restart Claude Desktop after editing.
+</details>
+
+<details>
+<summary><strong>Other MCP clients</strong></summary>
+
+Point your client at the `macpoint` command (stdio transport, JSON-RPC). Any client that speaks the [Model Context Protocol](https://modelcontextprotocol.io) will work.
+</details>
+
+<details>
+<summary><strong>Python (no MCP client)</strong></summary>
+
+You can use the backends directly without an MCP client:
+
+```python
+from macpoint.backends.template_instantiate import copy_template_to_new_presentation
+from macpoint.backends.pptx_backend import add_slide, populate_plain_text
+from pathlib import Path
+
+copy_template_to_new_presentation(Path("template.potx"), Path("deck.pptx"))
+add_slide(Path("deck.pptx"), "Title and Content")
+populate_plain_text(Path("deck.pptx"), 1, "Title", "Hello World")
+```
+</details>
+
+On first use, macOS will ask you to grant **Automation** permission (your app → Microsoft PowerPoint) in **System Settings → Privacy & Security → Automation**.
 
 ## Tools
 
