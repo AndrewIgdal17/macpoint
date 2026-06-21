@@ -1,6 +1,6 @@
 [project]
 name = "macpoint"
-version = "0.1.0"
+version = "0.2.0"
 description = "macOS MCP server for Microsoft PowerPoint for Mac — automate slide decks from Cursor and other MCP clients."
 readme = "README.md"
 requires-python = ">=3.10"

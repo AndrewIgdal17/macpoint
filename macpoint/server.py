@@ -25,6 +25,19 @@ def _not_impl(name: str) -> str:
     )
 
 
+def _resolve_template_source(source: str) -> Path | None:
+    """Resolve 'current', a POSIX path, or a template name to a Path."""
+    if source == "current":
+        path = state.get_last_active()
+        if path is None:
+            path = applescript_ppt.active_presentation_path()
+        return path
+    p = Path(source).expanduser()
+    if p.exists():
+        return p
+    return None
+
+
 @mcp.tool()
 def manage_presentation(
     action: str,
@@ -109,8 +122,26 @@ def slide_snapshot(
     include_screenshot: Optional[bool] = False,
     screenshot_filename: Optional[str] = None,
 ) -> str:
-    _ = slide_number, include_screenshot, screenshot_filename
-    return _not_impl("slide_snapshot")
+    """
+    Return a text snapshot of a slide's shapes, placeholders, and text content.
+
+    v0: text-only (no screenshot export). include_screenshot and screenshot_filename are
+    accepted for API parity but ignored.
+    """
+    _ = include_screenshot, screenshot_filename  # parity params; not implemented on Mac v0
+    path = state.get_last_active()
+    if path is None:
+        path = applescript_ppt.active_presentation_path()
+    if path is None or not path.exists():
+        return "Error: no .pptx path known. Open a file with manage_presentation first."
+    try:
+        sn = int(slide_number) if slide_number is not None else None
+    except (TypeError, ValueError):
+        return f"Error: slide_number must be integer or null, got {slide_number!r}"
+    try:
+        return pptx_backend.slide_snapshot(path, sn)
+    except Exception as exc:  # noqa: BLE001
+        return f"Error: {exc}"
 
 
 @mcp.tool()
@@ -129,19 +160,38 @@ def switch_slide(slide_number: Union[str, int]) -> str:
 
 @mcp.tool()
 def add_speaker_notes(slide_number: Union[str, int], notes_text: str) -> str:
-    _ = slide_number, notes_text
-    return _not_impl("add_speaker_notes")
+    """Set speaker notes on a slide (overwrites existing notes)."""
+    path = state.get_last_active()
+    if path is None:
+        path = applescript_ppt.active_presentation_path()
+    if path is None or not path.exists():
+        return "Error: no .pptx path known. Open a file with manage_presentation first."
+    try:
+        sn = int(slide_number)
+    except (TypeError, ValueError):
+        return f"Error: slide_number must be integer, got {slide_number!r}"
+    try:
+        return pptx_backend.add_speaker_notes(path, sn, notes_text)
+    except Exception as exc:  # noqa: BLE001
+        return f"Error: {exc}"
 
 
 @mcp.tool()
 def list_templates() -> str:
-    return _not_impl("list_templates")
+    """List PowerPoint template files found in standard macOS template directories."""
+    return pptx_backend.list_templates()
 
 
 @mcp.tool()
 def analyze_template(source: str = "current", detailed: bool = False) -> str:
-    _ = source, detailed
-    return _not_impl("analyze_template")
+    """Analyze a template or deck's layouts and placeholders."""
+    path = _resolve_template_source(source)
+    if path is None or not path.exists():
+        return f"Error: could not resolve source {source!r}. Pass a POSIX path or use 'current' with a deck open."
+    try:
+        return pptx_backend.analyze_template(path, detailed)
+    except Exception as exc:
+        return f"Error: {exc}"
 
 
 @mcp.tool()
@@ -202,8 +252,20 @@ def manage_slide(
     slide_number: Union[str, int],
     target_position: Optional[int] = None,
 ) -> str:
-    _ = operation, slide_number, target_position
-    return _not_impl("manage_slide")
+    """Manage slides: delete, duplicate, or move."""
+    path = state.get_last_active()
+    if path is None:
+        path = applescript_ppt.active_presentation_path()
+    if path is None or not path.exists():
+        return "Error: no .pptx path known. Open a file with manage_presentation first."
+    try:
+        sn = int(slide_number)
+    except (TypeError, ValueError):
+        return f"Error: slide_number must be integer, got {slide_number!r}"
+    try:
+        return pptx_backend.manage_slide(path, operation, sn, target_position)
+    except Exception as exc:  # noqa: BLE001
+        return f"Error: {exc}"
 
 
 @mcp.tool()

@@ -100,13 +100,13 @@ On first use, macOS will ask you to grant **Automation** permission (your app â†
 | `populate_placeholder` | Working | Set plain text on named placeholders (python-pptx) |
 | `add_slide_with_layout` | Working | Append a slide using a named layout |
 | `switch_slide` | Working | Navigate to a slide by number (AppleScript) |
+| `slide_snapshot` | Working | Text snapshot of shapes, placeholders, text, and speaker notes |
+| `add_speaker_notes` | Working | Set speaker notes on any slide (overwrites) |
+| `list_templates` | Working | Scan macOS template directories |
+| `analyze_template` | Working | Enumerate layouts, placeholders, types, and dimensions |
+| `manage_slide` | Working | Delete, move (reorder), or duplicate slides |
 | `evaluate` | Safe | Returns guidance (does NOT execute arbitrary code) |
-| `slide_snapshot` | Stub | Not yet implemented |
-| `add_speaker_notes` | Stub | Not yet implemented |
-| `list_templates` | Stub | Not yet implemented |
-| `analyze_template` | Stub | Not yet implemented |
-| `manage_slide` | Stub | Not yet implemented |
-| `add_animation` | Stub | Not yet implemented |
+| `add_animation` | N/A | Not feasible on Mac (animation schema unsupported) |
 
 ## Example: Create a deck from a template
 
