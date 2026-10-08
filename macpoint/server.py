@@ -10,10 +10,11 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Optional, Union
 
-from mcp.server.fastmcp import FastMCP
+from mcp.server.fastmcp import FastMCP, Image
 
 from macpoint import state
 from macpoint.backends import applescript_ppt, pptx_backend, template_instantiate
+from macpoint.backends.slide_export import DIALOG_MESSAGE, export_slide_png
 from macpoint.edit_session import run_writable
 
 mcp = FastMCP("MacPoint")
@@ -143,14 +144,8 @@ def slide_snapshot(
     slide_number: Optional[Union[str, int]] = None,
     include_screenshot: Optional[bool] = False,
     screenshot_filename: Optional[str] = None,
-) -> str:
-    """
-    Return a text snapshot of a slide's shapes, placeholders, and text content.
-
-    v0: text-only (no screenshot export). include_screenshot and screenshot_filename are
-    accepted for API parity but ignored.
-    """
-    _ = include_screenshot, screenshot_filename  # parity params; not implemented on Mac v0
+):
+    """Return a text snapshot. When include_screenshot is true, also return a rendered PNG."""
     path = state.get_last_active()
     if path is None:
         path = applescript_ppt.active_presentation_path()
@@ -161,9 +156,26 @@ def slide_snapshot(
     except (TypeError, ValueError):
         return f"Error: slide_number must be integer or null, got {slide_number!r}"
     try:
-        return pptx_backend.slide_snapshot(path, sn)
+        text = pptx_backend.slide_snapshot(path, sn)
     except Exception as exc:  # noqa: BLE001
         return f"Error: {exc}"
+    if not include_screenshot:
+        return text
+    export_slide = 1 if sn is None else sn
+    active = applescript_ppt.active_presentation_path()
+    if active is None or active.resolve() != path.resolve():
+        applescript_ppt.presentation_open(path)
+    if screenshot_filename:
+        dest = Path(screenshot_filename).expanduser()
+    else:
+        dest = Path("/tmp/macpoint-snapshots") / f"{path.stem}-slide-{export_slide}.png"
+    try:
+        png = export_slide_png(path, export_slide, dest)
+    except RuntimeError as exc:
+        return f"{text}\n\n{exc}"
+    except Exception as exc:  # noqa: BLE001
+        return f"{text}\n\nError: {exc}"
+    return [text, Image(path=png)]
 
 
 @mcp.tool()
