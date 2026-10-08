@@ -108,3 +108,42 @@ end tell
     if not out:
         return None
     return Path(out)
+
+
+def current_slide_index() -> int | None:
+    script = """
+tell application "Microsoft PowerPoint"
+    try
+        return slide index of slide of view of active window
+    on error
+        return ""
+    end try
+end tell
+"""
+    out = run_applescript(script)
+    if not out:
+        return None
+    try:
+        return int(out)
+    except ValueError:
+        return None
+
+
+def active_presentation_state() -> str:
+    """Return 'none', 'unsaved', or 'saved'."""
+    script = """
+tell application "Microsoft PowerPoint"
+    if (count of presentations) is 0 then return "none"
+    try
+        set fn to full name of active presentation of active window
+        if fn is missing value or fn is "" then return "unsaved"
+        return "saved"
+    on error
+        return "unsaved"
+    end try
+end tell
+"""
+    out = run_applescript(script).strip()
+    if out in ("none", "unsaved", "saved"):
+        return out
+    return "none"

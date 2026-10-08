@@ -14,6 +14,7 @@ from mcp.server.fastmcp import FastMCP
 
 from macpoint import state
 from macpoint.backends import applescript_ppt, pptx_backend, template_instantiate
+from macpoint.edit_session import run_writable
 
 mcp = FastMCP("MacPoint")
 
@@ -23,6 +24,23 @@ def _not_impl(name: str) -> str:
         f"Not implemented on Mac v0: {name}. "
         "See Tools/MacPoint/docs/mac-deltas.md and Projects/MacPoint/Capability matrix."
     )
+
+
+_UNSAVED = (
+    "Error: the open deck has no path. Save it with manage_presentation action=save_as first."
+)
+_NO_PATH = "Error: no .pptx path known. Open a file with manage_presentation first."
+
+
+def _deck_path_or_error():
+    path = state.get_last_active()
+    if path is None:
+        path = applescript_ppt.active_presentation_path()
+    if path is not None and path.exists():
+        return path
+    if applescript_ppt.active_presentation_state() == "unsaved":
+        return _UNSAVED
+    return _NO_PATH
 
 
 def _resolve_template_source(source: str) -> Path | None:
@@ -161,17 +179,15 @@ def switch_slide(slide_number: Union[str, int]) -> str:
 @mcp.tool()
 def add_speaker_notes(slide_number: Union[str, int], notes_text: str) -> str:
     """Set speaker notes on a slide (overwrites existing notes)."""
-    path = state.get_last_active()
-    if path is None:
-        path = applescript_ppt.active_presentation_path()
-    if path is None or not path.exists():
-        return "Error: no .pptx path known. Open a file with manage_presentation first."
+    path = _deck_path_or_error()
+    if isinstance(path, str):
+        return path
     try:
         sn = int(slide_number)
     except (TypeError, ValueError):
         return f"Error: slide_number must be integer, got {slide_number!r}"
     try:
-        return pptx_backend.add_speaker_notes(path, sn, notes_text)
+        return run_writable(path, lambda: pptx_backend.add_speaker_notes(path, sn, notes_text))
     except Exception as exc:  # noqa: BLE001
         return f"Error: {exc}"
 
@@ -197,14 +213,12 @@ def analyze_template(source: str = "current", detailed: bool = False) -> str:
 @mcp.tool()
 def add_slide_with_layout(template_name: str, layout_name: str, after_slide: int) -> str:
     """Add a new slide (appended to end) using a named layout from the deck's slide master."""
-    _ = template_name, after_slide  # parity params; MacPoint v0 always appends
-    path = state.get_last_active()
-    if path is None:
-        path = applescript_ppt.active_presentation_path()
-    if path is None or not path.exists():
-        return "Error: no .pptx path known. Open or create a presentation first."
+    _ = template_name, after_slide
+    path = _deck_path_or_error()
+    if isinstance(path, str):
+        return path
     try:
-        return pptx_backend.add_slide(path, layout_name)
+        return run_writable(path, lambda: pptx_backend.add_slide(path, layout_name))
     except Exception as exc:  # noqa: BLE001
         return f"Error: {exc}"
 
@@ -223,47 +237,41 @@ def populate_placeholder(
     Requires a known on-disk path: last deck opened via manage_presentation open/save_as,
     or active presentation path if PowerPoint reports it.
 
-    If PowerPoint has the file open with a write lock, this may fail — save, close, then retry.
+    Disk writes use run_writable so an open deck is saved, closed, written, and reopened.
     """
     if content_type not in ("auto", "text"):
         return f"Error: content_type {content_type!r} not supported on Mac v0 (use text or auto)."
-    path = state.get_last_active()
-    if path is None:
-        path = applescript_ppt.active_presentation_path()
-    if path is None or not path.exists():
-        return (
-            "Error: no .pptx path known. Open a file with manage_presentation action=open "
-            "or save_as first, then close the deck in PowerPoint if save fails due to file lock."
-        )
+    path = _deck_path_or_error()
+    if isinstance(path, str):
+        return path
     try:
         sn = int(slide_number) if slide_number is not None else 1
     except (TypeError, ValueError):
         return f"Error: slide_number must be integer or null, got {slide_number!r}"
     try:
-        msg = pptx_backend.populate_plain_text(path, sn, placeholder_name, content)
-        return msg
+        return run_writable(
+            path,
+            lambda: pptx_backend.populate_plain_text(path, sn, placeholder_name, content),
+        )
     except Exception as exc:  # noqa: BLE001
         return f"Error: {exc}"
 
 
 @mcp.tool()
-def manage_slide(
-    operation: str,
-    slide_number: Union[str, int],
-    target_position: Optional[int] = None,
-) -> str:
+def manage_slide(operation: str, slide_number: Union[str, int], target_position: Optional[int] = None) -> str:
     """Manage slides: delete, duplicate, or move."""
-    path = state.get_last_active()
-    if path is None:
-        path = applescript_ppt.active_presentation_path()
-    if path is None or not path.exists():
-        return "Error: no .pptx path known. Open a file with manage_presentation first."
+    path = _deck_path_or_error()
+    if isinstance(path, str):
+        return path
     try:
         sn = int(slide_number)
     except (TypeError, ValueError):
         return f"Error: slide_number must be integer, got {slide_number!r}"
     try:
-        return pptx_backend.manage_slide(path, operation, sn, target_position)
+        return run_writable(
+            path,
+            lambda: pptx_backend.manage_slide(path, operation, sn, target_position),
+        )
     except Exception as exc:  # noqa: BLE001
         return f"Error: {exc}"
 
