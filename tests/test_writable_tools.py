@@ -35,6 +35,17 @@ def test_unsaved_front_deck_asks_for_save_as(monkeypatch):
     )
 
 
+def test_state_check_failure_returns_no_path(monkeypatch):
+    monkeypatch.setattr(server.state, "get_last_active", lambda: None)
+    monkeypatch.setattr(applescript_ppt, "active_presentation_path", lambda: None)
+
+    def raise_state_error():
+        raise RuntimeError("PowerPoint not running")
+
+    monkeypatch.setattr(applescript_ppt, "active_presentation_state", raise_state_error)
+    assert server.add_speaker_notes(1, "x") == server._NO_PATH
+
+
 def test_populate_still_rejects_image(monkeypatch, tmp_path):
     deck = tmp_path / "deck.pptx"
     deck.write_bytes(b"pptx")

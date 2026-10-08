@@ -38,7 +38,11 @@ def _deck_path_or_error():
         path = applescript_ppt.active_presentation_path()
     if path is not None and path.exists():
         return path
-    if applescript_ppt.active_presentation_state() == "unsaved":
+    try:
+        presentation_state = applescript_ppt.active_presentation_state()
+    except Exception:  # noqa: BLE001 — PowerPoint not running or osascript failure
+        return _NO_PATH
+    if presentation_state == "unsaved":
         return _UNSAVED
     return _NO_PATH
 
