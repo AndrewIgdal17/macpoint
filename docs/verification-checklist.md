@@ -9,5 +9,7 @@ Run from vault root after `cd Tools/MacPoint && uv sync`.
 4b. **manage_presentation create from template:** `create` with `template_path` pointing at a `.potx` and `file_path` a new `/tmp/macpoint_test.pptx`; confirm PowerPoint opens the new file and layouts exist.
 5. **switch_slide:** From MCP client, call `switch_slide` with `2`; confirm slide changes or read stderr-style error in tool result.
 6. **populate_placeholder:** With deck **closed** in PowerPoint (avoid lock), after `open` + `close` or `save_as` path known, call `populate_placeholder` for a known shape name on slide 1; reopen deck and confirm text.
+7. **Edit while open:** Open a copy of a test deck in PowerPoint. Call `populate_placeholder` on slide 1. Confirm the text changes and the same deck is open again on slide 1.
+8. **Screenshot:** Call `slide_snapshot` with `include_screenshot=true` for slide 1. Confirm the tool result includes an image of that slide, or the blocked/dialog sentence if EXPORT_MODE is blocked.
 
 Record Office version and macOS version in WORKLOG when validating.
