@@ -64,11 +64,23 @@ end tell
     return run_applescript(script)
 
 
+_CLOSE_SAVING_MAP = {
+    "yes": "saving yes",
+    "no": "without saving",
+    "ask": "saving ask",
+}
+
+
 def presentation_close(saving: str = "yes") -> str:
     """Close active presentation. saving: 'yes' | 'no' | 'ask'."""
+    clause = _CLOSE_SAVING_MAP.get(saving)
+    if clause is None:
+        raise ValueError(
+            f"Invalid saving={saving!r}. Must be one of: {', '.join(_CLOSE_SAVING_MAP)}"
+        )
     script = f"""
 tell application "Microsoft PowerPoint"
-    close active presentation of active window saving {saving}
+    close active presentation of active window {clause}
 end tell
 """
     return run_applescript(script)
