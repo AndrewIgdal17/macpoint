@@ -245,6 +245,23 @@ def manage_slide(pptx_path: Path, operation: str, slide_number: int, target_posi
     raise ValueError(f"Unknown operation {operation!r}. Use: delete, move, duplicate.")
 
 
+def _match_name(needle: str, shape_name: str) -> bool:
+    """Token-aware name match: exact, then first-token, then any-token.
+
+    'Title' matches 'Title 1' (first token) but not 'Subtitle 2'.
+    'Title 1' matches 'Title 1' (exact).
+    'Content Placeholder' matches 'Content Placeholder 2' (token prefix).
+    """
+    name_lower = shape_name.lower()
+    if needle == name_lower:
+        return True
+    tokens = name_lower.split()
+    needle_tokens = needle.split()
+    if tokens[: len(needle_tokens)] == needle_tokens:
+        return True
+    return False
+
+
 def populate_plain_text(
     pptx_path: Path,
     slide_number: int,
@@ -252,7 +269,10 @@ def populate_plain_text(
     content: str,
 ) -> str:
     """
-    Set plain text on the first shape whose name contains placeholder_name (case-insensitive).
+    Set plain text on the first shape whose name matches placeholder_name.
+
+    Matching order: exact name, then token-prefix match (e.g. 'Title' matches
+    'Title 1' but not 'Subtitle 2'). Updates the first match only.
 
     v0 does not parse HTML/LaTeX; strips tags crudely for display text only.
     """
@@ -264,19 +284,21 @@ def populate_plain_text(
     updated = 0
     for shape in slide.shapes:
         name = (getattr(shape, "name", "") or "").lower()
-        if needle in name and getattr(shape, "has_text_frame", False) and shape.text_frame is not None:
+        if _match_name(needle, name) and getattr(shape, "has_text_frame", False) and shape.text_frame is not None:
             shape.text_frame.text = _strip_simple_tags(content)
             updated += 1
+            break
     if updated == 0:
         for ph in slide.placeholders:
             name = (getattr(ph, "name", "") or "").lower()
-            if needle in name and ph.has_text_frame:
+            if _match_name(needle, name) and ph.has_text_frame:
                 ph.text_frame.text = _strip_simple_tags(content)
                 updated += 1
+                break
     if updated == 0:
         raise ValueError(
             f"No placeholder/shape matched {placeholder_name!r} on slide {slide_number}. "
-            "Use slide_snapshot (when available) or inspect shape names in PowerPoint."
+            "Use slide_snapshot or analyze_template to find exact shape names."
         )
     prs.save(str(pptx_path))
     return f"Updated {updated} shape(s) on slide {slide_number}."

@@ -83,3 +83,39 @@ def test_manage_slide_delete_last_fails(tmp_pptx):
         assert False, "Should have raised"
     except ValueError as e:
         assert "last remaining" in str(e)
+
+
+def test_populate_title_does_not_change_subtitle(tmp_pptx):
+    """'Title' must update 'Title 1' only, not 'Subtitle 2'."""
+    from pptx import Presentation as PRS
+    from macpoint.backends.pptx_backend import populate_plain_text
+
+    # Set up: put a sentinel on subtitle so we can detect overwrites
+    prs = PRS(str(tmp_pptx))
+    slide = prs.slides[0]
+    for shape in slide.shapes:
+        if "subtitle" in shape.name.lower():
+            shape.text_frame.text = "SENTINEL"
+    prs.save(str(tmp_pptx))
+
+    result = populate_plain_text(tmp_pptx, 1, "Title", "MacPoint")
+    assert "Updated 1 shape" in result
+
+    prs = PRS(str(tmp_pptx))
+    slide = prs.slides[0]
+    for shape in slide.shapes:
+        name = shape.name.lower()
+        if "title" in name and "subtitle" not in name:
+            assert shape.text_frame.text == "MacPoint"
+        elif "subtitle" in name:
+            assert shape.text_frame.text == "SENTINEL", (
+                f"Subtitle was overwritten: {shape.text_frame.text!r}"
+            )
+
+
+def test_populate_full_name_matches_exactly(tmp_pptx):
+    """Full placeholder name like 'Title 1' matches exactly that shape."""
+    from macpoint.backends.pptx_backend import populate_plain_text
+
+    result = populate_plain_text(tmp_pptx, 1, "Title 1", "Exact Match")
+    assert "Updated 1 shape" in result

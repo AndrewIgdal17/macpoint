@@ -250,8 +250,11 @@ def populate_placeholder(
     Populate placeholder text on disk using python-pptx.
 
     v0: plain text only (crude tag strip). content_type image/plot not supported.
-    Requires a known on-disk path: last deck opened via manage_presentation open/save_as,
-    or active presentation path if PowerPoint reports it.
+
+    Name matching: exact match first, then token-prefix match
+    (e.g. 'Title' matches 'Title 1' but not 'Subtitle 2').
+    For safety with similar names, use the full placeholder name
+    (e.g. 'Title 1', 'Subtitle 2', 'Content Placeholder 2').
 
     Disk writes use run_writable so an open deck is saved, closed, written, and reopened.
     """
