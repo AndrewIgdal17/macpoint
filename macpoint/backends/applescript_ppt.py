@@ -63,7 +63,7 @@ end tell
 def presentation_save() -> str:
     script = """
 tell application "Microsoft PowerPoint"
-    save active presentation of active window
+    save presentation 1
 end tell
 """
     return run_applescript(script)
@@ -73,7 +73,7 @@ def presentation_save_as(path: Path) -> str:
     ps = _escape_posix_path(path)
     script = f"""
 tell application "Microsoft PowerPoint"
-    save active presentation of active window in POSIX file "{ps}"
+    save presentation 1 in POSIX file "{ps}"
 end tell
 """
     return run_applescript(script)

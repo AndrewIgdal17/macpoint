@@ -17,7 +17,7 @@ def test_active_presentation_state_values(monkeypatch):
 
 
 def test_presentation_save_script(monkeypatch):
-    """save must use app-level 'save active presentation of active window', not nested tell."""
+    """save must use 'save presentation 1', not nested tell or 'active presentation of active window'."""
     scripts = []
     monkeypatch.setattr(
         "macpoint.backends.applescript_ppt.run_applescript",
@@ -27,12 +27,12 @@ def test_presentation_save_script(monkeypatch):
     presentation_save()
     assert len(scripts) == 1
     src = scripts[0]
-    assert "save active presentation of active window" in src
+    assert "save presentation 1" in src
     assert "tell active presentation" not in src
 
 
 def test_presentation_save_as_script(monkeypatch):
-    """save_as must use 'save ... in POSIX file', not 'save as in'."""
+    """save_as must use 'save presentation 1 in POSIX file', not 'save as in'."""
     from pathlib import Path
     scripts = []
     monkeypatch.setattr(
@@ -43,7 +43,7 @@ def test_presentation_save_as_script(monkeypatch):
     presentation_save_as(Path("/tmp/deck.pptx"))
     assert len(scripts) == 1
     src = scripts[0]
-    assert "save active presentation of active window in POSIX file" in src
+    assert "save presentation 1 in POSIX file" in src
     assert "save as in" not in src
 
 
