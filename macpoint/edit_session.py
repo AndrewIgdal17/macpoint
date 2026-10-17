@@ -33,11 +33,15 @@ def _transact(path: Path, write: Callable[[], str], session: PptSession) -> str:
     session.save()
     session.close()
     try:
-        return write()
+        result = write()
     finally:
         session.open(path)
         if isinstance(slide, int) and slide >= 1:
-            session.switch(slide)
+            try:
+                session.switch(slide)
+            except Exception:  # noqa: BLE001 — switch is best-effort
+                pass
+    return result
 
 
 def run_writable(path: Path, write: Callable[[], str], session: PptSession | None = None) -> str:
@@ -71,7 +75,8 @@ def _default_session() -> PptSession:
             return applescript_ppt.presentation_close(saving="yes")
 
         def open(self, path: Path) -> str:
-            return applescript_ppt.presentation_open(path)
+            applescript_ppt._open_without_activate(path)
+            return f"Reopened {path} (quiet)"
 
         def switch(self, slide_number: int) -> str:
             return applescript_ppt.switch_slide(slide_number)

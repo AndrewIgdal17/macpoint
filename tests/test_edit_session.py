@@ -94,3 +94,28 @@ def test_lock_error_retries_once_when_path_matches(tmp_path):
     assert run_writable(deck, write, session) == "ok"
     assert n["count"] == 2
     assert any(c[0] == "close" for c in session.calls)
+
+
+def test_transact_switch_failure_still_returns_write():
+    """If switch raises after a successful write, the write result is returned."""
+    from macpoint.edit_session import run_writable
+
+    class SwitchFailSession:
+        def active_path(self):
+            from pathlib import Path
+            return Path("/tmp/deck.pptx")
+        def current_slide(self):
+            return 2
+        def save(self):
+            return "saved"
+        def close(self):
+            return "closed"
+        def open(self, path):
+            return "opened"
+        def switch(self, slide_number):
+            raise RuntimeError("switch_slide broken")
+
+    from pathlib import Path
+    deck = Path("/tmp/deck.pptx")
+    result = run_writable(deck, lambda: "write succeeded", session=SwitchFailSession())
+    assert result == "write succeeded"

@@ -35,6 +35,21 @@ end tell
     return run_applescript(script)
 
 
+def _open_without_activate(path: Path) -> None:
+    """Open a presentation without bringing PowerPoint to the foreground.
+
+    Uses Launch Services (macOS `open -g`) to avoid stealing focus
+    during the edit-while-open transaction.
+    """
+    import subprocess as _sp
+    _sp.run(
+        ["open", "-g", "-a", "Microsoft PowerPoint", str(path.resolve())],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+
 def presentation_create() -> str:
     script = """
 tell application "Microsoft PowerPoint"
@@ -90,7 +105,6 @@ def switch_slide(slide_number: int) -> str:
     """Navigate to 1-based slide index (best-effort AppleScript)."""
     script = f"""
 tell application "Microsoft PowerPoint"
-    activate
     tell active window
         set view type of active pane to slide view
         go to slide {int(slide_number)} of active presentation
