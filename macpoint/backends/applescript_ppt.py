@@ -102,13 +102,15 @@ end tell
 
 
 def switch_slide(slide_number: int) -> str:
-    """Navigate to 1-based slide index (best-effort AppleScript)."""
+    """Navigate to 1-based slide index.
+
+    Uses 'go to slide (view) number N' which targets the view object
+    per the PowerPoint AppleScript dictionary (command code sPPTDWGs).
+    """
+    n = int(slide_number)
     script = f"""
 tell application "Microsoft PowerPoint"
-    tell active window
-        set view type of active pane to slide view
-        go to slide {int(slide_number)} of active presentation
-    end tell
+    go to slide (view of active window) number {n}
 end tell
 """
     return run_applescript(script)

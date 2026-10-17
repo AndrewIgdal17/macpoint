@@ -93,3 +93,19 @@ def test_presentation_close_rejects_unknown_saving():
     from macpoint.backends.applescript_ppt import presentation_close
     with pytest.raises(ValueError, match="saving"):
         presentation_close(saving="no\nbeep")
+
+
+def test_switch_slide_targets_view_with_number(monkeypatch):
+    """switch_slide must target a view object with a number parameter."""
+    scripts = []
+    monkeypatch.setattr(
+        "macpoint.backends.applescript_ppt.run_applescript",
+        lambda src, timeout=120.0: scripts.append(src) or "",
+    )
+    from macpoint.backends.applescript_ppt import switch_slide
+    switch_slide(3)
+    src = scripts[0]
+    assert "go to slide" in src.lower()
+    assert "number 3" in src
+    assert "activate" not in src
+    assert "of active presentation" not in src.split("go to slide")[1]
