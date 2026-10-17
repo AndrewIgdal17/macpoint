@@ -18,12 +18,14 @@ Reference: [Ayushmaniar/powerpoint-mcp](https://github.com/Ayushmaniar/powerpoin
 | Tool | MacPoint v0 |
 |------|-------------|
 | `manage_presentation` | Partial — `open`, `create` (blank or **from template** with `.potx` content-type fix), `save`, `save_as`, `close`, `close_discard`. Paths are **POSIX**. |
-| `switch_slide` | Partial — best-effort AppleScript; verify on your Office build. |
-| `populate_placeholder` | Partial — **plain text** via `python-pptx`; crude tag strip. **Close** the deck in PowerPoint if you hit file locks. `content_type` image/plot not supported. Writes go through run_writable: if the file is the active presentation, MacPoint saves, closes, writes, reopens, and restores the slide. |
+| `switch_slide` | Partial — uses `go to slide (view of active window) number N`. Tested on PowerPoint 16.114. |
+| `populate_placeholder` | Partial — **plain text** via `python-pptx`; token-prefix name matching (e.g. `"Title"` matches `"Title 1"` but not `"Subtitle 2"`). `content_type` image/plot not supported. Writes go through run_writable: if the file is the active presentation, MacPoint saves, closes, writes, reopens, and restores the slide. |
 | `add_slide_with_layout` | Partial — appends slide with named layout via `python-pptx`. `template_name` ignored (single slide master). `after_slide` accepted for API parity but ignored (always appends). Writes go through run_writable: if the file is the active presentation, MacPoint saves, closes, writes, reopens, and restores the slide. |
 | `slide_snapshot` | Text snapshot plus optional PNG when include_screenshot is true. EXPORT_MODE is blocked. Timeout text: PowerPoint did not return within 20s. A dialog may be open. |
 | `add_speaker_notes` | Writes go through run_writable: if the file is the active presentation, MacPoint saves, closes, writes, reopens, and restores the slide. |
-| `list_templates`, `analyze_template`, `add_animation` | Stubs — return not-implemented message. |
+| `list_templates` | Partial — scans macOS template directories. |
+| `analyze_template` | Partial — `python-pptx` read-only: layouts, placeholders, types, dimensions. |
+| `add_animation` | Stub — returns not-implemented message. |
 | `manage_slide` | Writes go through run_writable: if the file is the active presentation, MacPoint saves, closes, writes, reopens, and restores the slide. |
 | `evaluate` | **Not arbitrary execution.** Returns guidance to use explicit tools. Per-tool: [evaluate.md](abilities/evaluate.md). |
 
